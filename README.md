@@ -11,7 +11,18 @@ Professional academic homepage builder with AI-powered features.
 
 **[🌐 View Live Demo](https://holdon1221.github.io/)**
 
+**[👤 My Academic Homepage](https://taeyonglee-cv.github.io/)** (originally based on ScholarSite but extended)
+
 See what your academic homepage will look like!
+
+## ✨ Features
+
+- **Academic Homepage Generator** – Create a professional homepage in minutes
+- **Publication Parser (PDF → JSON)** – Automatically extract metadata & abstracts
+- **AI-Powered Summaries & Translations** – Works with APIs from Anthropic Claude, OpenAI GPT, Groq, and Perplexity
+- **Multilingual Support** – Generate localized versions of your homepage (🇺🇸 EN, 🇰🇷 KR, 🇨🇳 ZH, 🇫🇷 FR, 🇩🇪 DE, 🇯🇵 JA, 🇪🇸 ES)
+- **Automated Citation Updates** – Keep citation counts fresh with a **SerpAPI-powered GitHub Action**
+- **One-Command Setup** – Run `scholarsite start` for instant build & live preview
 
 ## 🚀 Quick Start
 
