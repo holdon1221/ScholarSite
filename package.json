@@ -1,0 +1,65 @@
+{
+  "name": "scholarsite",
+  "version": "1.0.0",
+  "description": "Professional academic homepage builder with AI-powered features",
+  "main": "scholarsite",
+  "bin": {
+    "scholarsite": "./scholarsite"
+  },
+  "scripts": {
+    "start": "node scholarsite start",
+    "setup": "node scholarsite setup",
+    "build": "node scholarsite build",
+    "serve": "node scholarsite serve",
+    "translate": "node scholarsite translate",
+    "extract-pdfs": "node scripts/pdf-abstracts.js",
+    "enhance-abstracts": "node scripts/llm-abstracts.js",
+    "update-citations": "node scripts/scholar-citation-crawler.js",
+    "generate-homepage": "node -e \"const HomepageGenerator = require('./scripts/homepage-generator.js'); const generator = new HomepageGenerator(); generator.generate();\"",
+    "doctor": "node scholarsite doctor",
+    "config": "node scholarsite config",
+    "postinstall": "node scripts/install-python-deps.js"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "inquirer": "^12.9.1",
+    "node-fetch": "^3.3.2",
+    "ora": "^5.4.1",
+    "pdf-parse": "^1.1.1",
+    "puppeteer": "^24.16.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "academic",
+    "homepage",
+    "cli",
+    "ai",
+    "pdf",
+    "publications",
+    "scholar",
+    "research",
+    "website"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "bugs": {
+    "url": ""
+  },
+  "homepage": "",
+  "files": [
+    "scholarsite",
+    "scripts/",
+    "README.md"
+  ],
+  "devDependencies": {
+    "sharp": "^0.34.3"
+  }
+}

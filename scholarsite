@@ -1,0 +1,589 @@
+#!/usr/bin/env node
+
+/**
+ * 🎓 ScholarSite CLI
+ * Professional academic homepage builder with AI-powered features
+ * 
+ * Commands:
+ * - setup: Initial configuration and wizard
+ * - translate: AI-powered content translation
+ * - build: Generate complete homepage with enhanced abstracts
+ * - serve: Local development server
+ * 
+ * Features:
+ * - OCR extraction enabled by default for all PDFs
+ */
+
+const { program } = require('commander');
+const path = require('path');
+const chalk = require('chalk');
+const fs = require('fs');
+
+// Load environment variables from .env file if it exists
+try {
+  const envPath = path.join(process.cwd(), '.env');
+  if (fs.existsSync(envPath)) {
+    const envFile = fs.readFileSync(envPath, 'utf8');
+    const envLines = envFile.split('\n');
+
+    for (const line of envLines) {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+        const [key, ...valueParts] = trimmed.split('=');
+        const value = valueParts.join('=');
+        if (!process.env[key.trim()]) {
+          process.env[key.trim()] = value.trim();
+        }
+      }
+    }
+  }
+} catch (error) {
+  // Silently ignore .env loading errors
+}
+
+// Set up CLI metadata
+program
+  .name('scholarsite')
+  .description('🎓 Professional academic homepage builder with AI-powered abstract generation')
+  .version('1.0.0');
+
+// Quick-start command - Complete setup, build and serve in one command
+program
+  .command('start')
+  .description('🚀 Complete setup, build and serve in one command')
+  .option('--skip-pdfs', 'Skip PDF extraction')
+  .option('--skip-llm', 'Skip LLM enhancement')
+  .option('--skip-citations', 'Skip citation updates')
+  .option('-p, --port <port>', 'Server port', '8000')
+  .action(async (options) => {
+    console.log(chalk.cyan.bold('🚀 ScholarSite Quick Start'));
+    console.log(chalk.gray('━'.repeat(50)));
+    console.log(chalk.cyan('This will: Dependencies → Setup → Build → Serve in one command\n'));
+
+    // Step 0: Check and install dependencies
+    const { spawn, execSync } = require('child_process');
+
+    console.log(chalk.blue('🔍 Step 0: Environment Check'));
+
+    // Check Node.js version
+    try {
+      const nodeVersion = process.version.replace('v', '').split('.').map(Number);
+      if (nodeVersion[0] < 18) {
+        console.log(chalk.red('❌ Node.js ≥18.0.0 required. Current version:', process.version));
+        console.log(chalk.yellow('💡 Please update Node.js: https://nodejs.org/'));
+        process.exit(1);
+      }
+      console.log(chalk.green('✅ Node.js version check passed'));
+    } catch (error) {
+      console.log(chalk.red('❌ Node.js not found'));
+      process.exit(1);
+    }
+
+    // Check if dependencies are installed (Updated path: no '../' since we're in root)
+    const nodeModulesExists = fs.existsSync(path.join(__dirname, 'node_modules'));
+    if (!nodeModulesExists) {
+      console.log(chalk.yellow('📦 Installing dependencies (this may take a moment)...'));
+      try {
+        execSync('npm install', {
+          stdio: 'inherit',
+          cwd: __dirname  // Updated: use current directory
+        });
+        console.log(chalk.green('✅ Dependencies installed successfully\n'));
+      } catch (error) {
+        console.log(chalk.red('❌ Failed to install dependencies'));
+        console.log(chalk.yellow('💡 Please run manually: npm install'));
+        process.exit(1);
+      }
+    } else {
+      console.log(chalk.green('✅ Dependencies already installed\n'));
+    }
+
+    // Step 1: Auto-setup
+    if (!fs.existsSync('config.json')) {
+      console.log(chalk.blue('📋 Step 1: Configuration Setup'));
+      const SetupWizard = require(path.join(__dirname, 'scripts', 'setup-wizard.js')); // Updated path
+      const wizard = new SetupWizard();
+      await wizard.run();
+      console.log(chalk.green('✅ Setup completed!\n'));
+    } else {
+      console.log(chalk.green('✅ Configuration already exists\n'));
+    }
+
+    // Step 2: Build (using existing build logic)
+    console.log(chalk.blue('🏗️  Step 2: Building Homepage'));
+    const buildArgs = ['build'];
+    if (options.skipPdfs) buildArgs.push('--skip-pdfs');
+    if (options.skipLlm) buildArgs.push('--skip-llm');
+    if (options.skipCitations) buildArgs.push('--skip-citations');
+
+    const buildProcess = spawn('node', [process.argv[1], ...buildArgs], { stdio: 'inherit' });
+    buildProcess.on('close', (code) => {
+      if (code === 0) {
+        console.log(chalk.green('\n✅ Build completed!'));
+
+        // Step 3: Auto-serve
+        console.log(chalk.blue('🌐 Step 3: Starting Server'));
+        setTimeout(() => {
+          const serverProcess = spawn('node', [process.argv[1], 'serve', '--port', options.port], {
+            stdio: 'inherit'
+          });
+        }, 1000);
+      } else {
+        console.log(chalk.red(`❌ Build failed with code ${code}`));
+        process.exit(1);
+      }
+    });
+  });
+
+// Setup command - Interactive setup wizard
+program
+  .command('setup')
+  .description('🧙‍♂️ Run interactive setup wizard')
+  .option('-f, --force', 'Force overwrite existing configuration')
+  .action(async (options) => {
+    console.log(chalk.blue('🧙‍♂️ Starting Interactive Setup Wizard...'));
+    const SetupWizard = require(path.join(__dirname, 'scripts', 'setup-wizard.js')); // Updated path
+    const wizard = new SetupWizard();
+
+    try {
+      await wizard.run();
+    } catch (error) {
+      console.error(chalk.red('❌ Setup failed:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Config command - Configuration management
+program
+  .command('config')
+  .description('⚙️  Manage configuration settings')
+  .argument('[action]', 'Action: show, edit, reset', 'show')
+  .option('--key <key>', 'Specific config key to show/edit')
+  .option('--value <value>', 'New value to set')
+  .action((action, options) => {
+    console.log(chalk.blue(`⚙️  Configuration: ${action}`));
+
+    const fs = require('fs');
+    const path = require('path');
+    const configPath = path.join(process.cwd(), 'config.json');
+
+    switch (action) {
+      case 'show':
+        if (fs.existsSync(configPath)) {
+          const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+          if (options.key) {
+            const value = options.key.split('.').reduce((obj, key) => obj?.[key], config);
+            console.log(chalk.cyan(`${options.key}:`), value || chalk.gray('undefined'));
+          } else {
+            console.log(chalk.cyan('Current configuration:'));
+            console.log(JSON.stringify(config, null, 2));
+          }
+        } else {
+          console.log(chalk.red('❌ No configuration file found. Run: scholarsite setup'));
+        }
+        break;
+
+      case 'edit':
+        if (!options.key || !options.value) {
+          console.log(chalk.red('❌ Usage: scholarsite config edit --key <key> --value <value>'));
+          return;
+        }
+
+        if (fs.existsSync(configPath)) {
+          const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+          // Simple key setting (doesn't handle nested keys for now)
+          const keys = options.key.split('.');
+          let obj = config;
+          for (let i = 0; i < keys.length - 1; i++) {
+            if (!obj[keys[i]]) obj[keys[i]] = {};
+            obj = obj[keys[i]];
+          }
+          obj[keys[keys.length - 1]] = options.value;
+
+          fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+          console.log(chalk.green(`✅ Updated ${options.key} = ${options.value}`));
+        } else {
+          console.log(chalk.red('❌ No configuration file found. Run: scholarsite setup'));
+        }
+        break;
+
+      case 'reset':
+        if (fs.existsSync(configPath)) {
+          fs.unlinkSync(configPath);
+          console.log(chalk.green('✅ Configuration reset. Run: scholarsite setup'));
+        } else {
+          console.log(chalk.yellow('⚠️  No configuration file to reset'));
+        }
+        break;
+
+      default:
+        console.log(chalk.red(`❌ Unknown action: ${action}`));
+        console.log(chalk.gray('Available actions: show, edit, reset'));
+    }
+  });
+
+
+// Translate command - AI-powered translation
+program
+  .command('translate')
+  .description('🌐 Automatically translate content with AI')
+  .option('--force', 'Force re-translation of existing translations')
+  .action(async (options) => {
+    console.log(chalk.cyan('🌐 Starting AI Translation...'));
+
+    try {
+      const AITranslator = require(path.join(__dirname, 'scripts', 'ai-translator.js')); // Updated path
+      const translator = new AITranslator();
+      await translator.translateConfig();
+    } catch (error) {
+      console.error(chalk.red('❌ Translation failed:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Build command - Generate complete homepage
+program
+  .command('build')
+  .description('🏗️  Generate complete academic homepage')
+  .option('--skip-pdfs', 'Skip PDF extraction')
+  .option('--skip-llm', 'Skip LLM enhancement')
+  .option('--skip-citations', 'Skip citation updates')
+  .option('--serve', 'Auto-start server after build')
+  .action(async (options) => {
+    console.log(chalk.cyan('🏗️  Building Homepage...'));
+
+    const { spawn } = require('child_process');
+    const fs = require('fs');
+
+    // Auto-setup if no config exists
+    if (!fs.existsSync('config.json')) {
+      console.log(chalk.yellow('⚠️  No configuration found. Running setup first...\n'));
+      const SetupWizard = require(path.join(__dirname, 'scripts', 'setup-wizard.js')); // Updated path
+      const wizard = new SetupWizard();
+      await wizard.run();
+      console.log(chalk.green('\n✅ Setup completed! Continuing with build...\n'));
+    }
+
+    let buildSteps = [];
+
+    if (!options.skipPdfs) {
+      buildSteps.push('extract-pdfs');
+    }
+
+    if (!options.skipLlm) {
+      buildSteps.push('enhance-abstracts');
+    }
+
+    if (!options.skipCitations) {
+      buildSteps.push('update-citations');
+    }
+
+    // Always generate homepage as final step
+    buildSteps.push('generate-homepage');
+
+    if (buildSteps.length === 1 && buildSteps[0] === 'generate-homepage') {
+      console.log(chalk.yellow('⚠️  Only homepage generation will run (other steps skipped)'));
+    }
+
+    // Run build steps
+    const runStep = (step, callback) => {
+      console.log(chalk.blue(`📋 Running: ${step}...`));
+
+      switch (step) {
+        case 'extract-pdfs':
+          const pdfArgs = [path.join(__dirname, 'scripts', 'pdf-abstracts.js')];
+          const pdfEnv = { ...process.env };
+
+          // OCR extraction is now enabled by default
+          console.log(chalk.green('🔍 OCR extraction enabled by default'));
+
+          const pdfScript = spawn('node', pdfArgs, {
+            stdio: 'inherit',
+            env: pdfEnv
+          });
+          pdfScript.on('close', (code) => {
+            if (code === 0) {
+              console.log(chalk.green(`✅ ${step} completed`));
+              callback();
+            } else {
+              console.log(chalk.red(`❌ ${step} failed with code ${code}`));
+              process.exit(1);
+            }
+          });
+          break;
+
+        case 'enhance-abstracts':
+          const llmScript = spawn('node', [path.join(__dirname, 'scripts', 'llm-abstracts.js')], { stdio: 'inherit' }); // Updated path
+          llmScript.on('close', (code) => {
+            if (code === 0) {
+              console.log(chalk.green(`✅ ${step} completed`));
+              callback();
+            } else {
+              console.log(chalk.red(`❌ ${step} failed with code ${code}`));
+              process.exit(1);
+            }
+          });
+          break;
+
+        case 'update-citations':
+          const citationScript = spawn('node', [path.join(__dirname, 'scripts', 'scholar-citation-crawler.js')], { stdio: 'inherit' }); // Updated path
+          citationScript.on('close', (code) => {
+            if (code === 0) {
+              console.log(chalk.green(`✅ ${step} completed`));
+              callback();
+            } else {
+              console.log(chalk.red(`❌ ${step} failed with code ${code}`));
+              process.exit(1);
+            }
+          });
+          break;
+
+        case 'generate-homepage':
+          const HomepageGenerator = require(path.join(__dirname, 'scripts', 'homepage-generator.js')); // Updated path
+          const generator = new HomepageGenerator();
+          generator.generate().then(() => {
+            console.log(chalk.green(`✅ ${step} completed`));
+            callback();
+          }).catch((error) => {
+            console.log(chalk.red(`❌ ${step} failed:`, error.message));
+            process.exit(1);
+          });
+          break;
+
+        default:
+          console.log(chalk.red(`❌ Unknown build step: ${step}`));
+          process.exit(1);
+      }
+    };
+
+    // Run steps sequentially
+    let stepIndex = 0;
+    const runNextStep = () => {
+      if (stepIndex < buildSteps.length) {
+        runStep(buildSteps[stepIndex], () => {
+          stepIndex++;
+          runNextStep();
+        });
+      } else {
+        console.log(chalk.green.bold('🎉 Homepage build complete!'));
+
+        if (options.serve) {
+          console.log(chalk.cyan('🌐 Auto-starting server...'));
+          setTimeout(() => {
+            const { spawn } = require('child_process');
+            const serverProcess = spawn('node', [process.argv[1], 'serve', '--port', '8000'], {
+              stdio: 'inherit',
+              detached: false
+            });
+          }, 1000);
+        } else {
+          console.log(chalk.cyan('💡 Run: scholarsite serve'));
+        }
+      }
+    };
+
+    runNextStep();
+  });
+
+// Serve command - Local development server  
+program
+  .command('serve')
+  .description('🌐 Start local development server')
+  .option('-p, --port <port>', 'Port number', '8000')
+  .action((options) => {
+    console.log(chalk.magenta(`🌐 Starting server on port ${options.port}...`));
+    console.log(chalk.cyan(`📍 http://localhost:${options.port}`));
+
+    const { spawn } = require('child_process');
+    const server = spawn('python', ['-m', 'http.server', options.port], { stdio: 'inherit' });
+
+    server.on('close', (code) => {
+      console.log(chalk.yellow(`🛑 Server stopped with code ${code}`));
+    });
+  });
+
+// Doctor command - Diagnose and fix issues
+program
+  .command('doctor')
+  .description('🩺 Diagnose and fix common issues')
+  .option('--verbose', 'Show detailed diagnostic information')
+  .action((options) => {
+    console.log(chalk.blue('🩺 Running diagnostic checks...\n'));
+
+    const fs = require('fs');
+    const path = require('path');
+    const { spawn } = require('child_process');
+
+    let issueCount = 0;
+    let fixCount = 0;
+
+    // Helper function to run diagnostics
+    const diagnose = (check, fix, description) => {
+      console.log(chalk.cyan(`🔍 Checking: ${description}`));
+
+      if (check()) {
+        console.log(chalk.green('  ✅ OK'));
+      } else {
+        issueCount++;
+        console.log(chalk.red('  ❌ Issue found'));
+
+        if (fix) {
+          try {
+            fix();
+            fixCount++;
+            console.log(chalk.green('  🔧 Auto-fixed'));
+          } catch (error) {
+            console.log(chalk.red(`  ❌ Fix failed: ${error.message}`));
+          }
+        } else {
+          console.log(chalk.yellow('  ⚠️  Manual fix required'));
+        }
+      }
+
+      if (options.verbose) console.log('');
+    };
+
+    // Node.js version check (based on actual package requirements)
+    diagnose(
+      () => {
+        const version = process.version.replace('v', '').split('.').map(Number);
+        return version[0] >= 18;
+      },
+      null,
+      'Node.js version (≥18.0.0)'
+    );
+
+    // Package dependencies check
+    diagnose(
+      () => fs.existsSync('package.json'),
+      () => {
+        const packageJson = {
+          "name": "scholarsite",
+          "version": "1.0.0",
+          "dependencies": {
+            "chalk": "^4.1.2",
+            "commander": "^11.1.0",
+            "inquirer": "^12.9.1",
+            "node-fetch": "^3.3.2",
+            "ora": "^5.4.1",
+            "pdf-parse": "^1.1.1",
+            "puppeteer": "^24.16.1"
+          },
+          "engines": {
+            "node": ">=18.0.0"
+          }
+        };
+        fs.writeFileSync('package.json', JSON.stringify(packageJson, null, 2));
+      },
+      'package.json exists'
+    );
+
+    // Node modules installed
+    diagnose(
+      () => fs.existsSync('node_modules'),
+      null,
+      'Dependencies installed (run: npm install)'
+    );
+
+    // Essential directories
+    const requiredDirs = [
+      'publications',
+      'data'
+    ];
+
+    requiredDirs.forEach(dir => {
+      diagnose(
+        () => fs.existsSync(dir),
+        () => fs.mkdirSync(dir, { recursive: true }),
+        `Directory: ${dir}`
+      );
+    });
+
+    // .env file for API keys
+    diagnose(
+      () => fs.existsSync('.env'),
+      () => {
+        const envContent = '# LLM API Keys\n# ANTHROPIC_API_KEY=your_key_here\n# OPENAI_API_KEY=your_key_here\n# PERPLEXITY_API_KEY=your_key_here\n# GROQ_API_KEY=your_key_here\n';
+        fs.writeFileSync('.env', envContent);
+      },
+      '.env file exists'
+    );
+
+    // Configuration file exists
+    diagnose(
+      () => fs.existsSync('config.json'),
+      null,
+      'Configuration file (run: scholarsite setup)'
+    );
+
+    // Configuration structure validation
+    if (fs.existsSync('config.json')) {
+      diagnose(
+        () => {
+          try {
+            const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+            return config.personal && config.settings;
+          } catch {
+            return false;
+          }
+        },
+        null,
+        'Configuration file structure'
+      );
+    }
+
+    // Environment variables check  
+    diagnose(
+      () => process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY || process.env.PERPLEXITY_API_KEY || process.env.GROQ_API_KEY,
+      null,
+      'LLM API key configured'
+    );
+
+    // Summary
+    console.log(chalk.blue('\n📋 Diagnostic Summary:'));
+    console.log(chalk.cyan(`🔍 Issues found: ${issueCount}`));
+    console.log(chalk.green(`🔧 Issues fixed: ${fixCount}`));
+
+    if (issueCount === 0) {
+      console.log(chalk.green('\n🎉 All systems operational! Your setup looks great.'));
+    } else if (fixCount === issueCount) {
+      console.log(chalk.green('\n✅ All issues have been automatically fixed!'));
+    } else {
+      console.log(chalk.yellow('\n⚠️  Some issues require manual attention.'));
+      console.log(chalk.gray('\nCommon fixes:'));
+      console.log(chalk.gray('• Run: scholarsite setup (if config.json missing)'));
+      console.log(chalk.gray('• Add PDF files to publications/ directory'));
+      console.log(chalk.gray('• Set API keys in .env file'));
+      console.log(chalk.gray('• Install Python for local server'));
+    }
+  });
+
+// Help enhancement
+program.on('--help', () => {
+  console.log('');
+  console.log(chalk.cyan.bold('🎓 ScholarSite CLI'));
+  console.log('');
+  console.log(chalk.cyan('🚀 ONE-COMMAND START:'));
+  console.log('  $ ./scholarsite start           # Setup → Build → Serve in one go!');
+  console.log('');
+  console.log('Step-by-Step:');
+  console.log('  $ ./scholarsite setup           # Interactive configuration');
+  console.log('  $ ./scholarsite translate       # AI-powered translation');
+  console.log('  $ ./scholarsite build --serve   # Build and auto-start server');
+  console.log('');
+  console.log('Daily Usage:');
+  console.log('  $ ./scholarsite build           # Update homepage');
+  console.log('  $ ./scholarsite serve           # View locally');
+  console.log('');
+  console.log('Advanced:');
+  console.log('  $ ./scholarsite config show     # View configuration');
+  console.log('');
+  console.log(chalk.green('✨ Key Features:'));
+  console.log('  • AI-powered abstract generation and enhancement');
+  console.log('  • Multi-language support (EN/KO/FR/ES/DE/JA/ZH)');
+  console.log('  • Professional academic templates');
+  console.log('');
+});
+
+// Parse arguments
+program.parse();

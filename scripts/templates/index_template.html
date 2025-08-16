@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}">
+<head>
+  {{META_TAGS}}
+  <title>{{TITLE}}</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+<body>
+  <nav class="main-nav">
+    <div class="nav-container">
+      <div class="nav-brand"><a href="#hero">{{PERSONAL_NAME}}</a></div>
+      <div class="nav-links desktop-nav">
+        <a href="#experiences" data-nav="experience" data-lang-key="nav-experience">{{NAV_EXPERIENCE}}</a>
+        <a href="#ongoing-project" data-nav="projects" data-lang-key="nav-ongoing-projects">{{NAV_ONGOING}}</a>
+        <a href="#publications" data-nav="publications" data-lang-key="nav-publications">{{NAV_PUBLICATIONS}}</a>
+        <a href="#achievements" data-nav="achievements" data-lang-key="nav-achievements">{{NAV_ACHIEVEMENTS}}</a>
+        <a href="#education" data-nav="education" data-lang-key="nav-education">{{NAV_EDUCATION}}</a>
+      </div>
+      <button class="mobile-menu-toggle" aria-label="Toggle mobile menu">
+          <span></span>
+          <span></span>
+          <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Language Selector (Desktop only) -->
+  <nav class="language-selector desktop-only" id="desktop-language-selector">
+      <!-- Language buttons will be generated dynamically -->
+  </nav>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu-overlay" id="mobile-menu">
+      <div class="mobile-menu-content">
+          <div class="mobile-menu-header">
+              <h3>Menu</h3>
+              <button class="mobile-menu-close" aria-label="Close mobile menu">&times;</button>
+          </div>
+          
+          <div class="mobile-menu-section">
+              <h4>Navigation</h4>
+              <a href="#experiences" data-nav="experience" class="mobile-menu-link" data-lang-key="nav-experience">{{NAV_EXPERIENCE}}</a>
+              <a href="#ongoing-project" data-nav="projects" class="mobile-menu-link" data-lang-key="nav-ongoing-projects">{{NAV_ONGOING}}</a>
+              <a href="#publications" data-nav="publications" class="mobile-menu-link" data-lang-key="nav-publications">{{NAV_PUBLICATIONS}}</a>
+              <a href="#achievements" data-nav="achievements" class="mobile-menu-link" data-lang-key="nav-achievements">{{NAV_ACHIEVEMENTS}}</a>
+              <a href="#education" data-nav="education" class="mobile-menu-link" data-lang-key="nav-education">{{NAV_EDUCATION}}</a>
+          </div>
+            
+          <div class="mobile-menu-section">
+              <h4>Language</h4>
+              <div class="mobile-language-selector" id="mobile-language-selector">
+                  <!-- Language buttons will be generated dynamically -->
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <header id="hero">
+    <div class="container">
+      <div class="two-column-section">
+        <div class="left-column">
+          <h1 class="name">{{PERSONAL_NAME}}</h1>
+          <p class="title" data-lang-key="title">{{TITLE_TEXT}}</p>
+          <p class="bio" data-lang-key="bio">{{BIO_TEXT}}</p>
+          <div class="experiences-section" id="experiences">
+            <h2 class="section-title" data-lang-key="section-experience">{{SEC_EXPERIENCE}}</h2>
+            <ul class="experiences-list" id="experiences-container"></ul>
+          </div>
+        </div>
+        <div class="right-column">
+          <div class="profile-image"><img src="assets/profile.png" alt="{{PERSONAL_NAME}}"></div>
+          <div class="social-links">
+            {{SOCIAL_LINKS}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section id="ongoing-project" class="section">
+    <div class="container">
+      <h2 class="section-title" data-lang-key="section-ongoing-projects">{{SEC_ONGOING}}</h2>
+      <div class="ongoing-project-item" id="ongoing-project-container"></div>
+    </div>
+  </section>
+
+  <section id="publications" class="section">
+    <div class="container">
+        <h2 class="section-title" data-lang-key="section-publications">{{SEC_PUBLICATIONS}}</h2>
+        <div class="publications-controls">
+            <div class="sort-controls">
+                <label for="sort-select" data-lang-key="sort-by">Sort by:</label>
+                <select id="sort-select">
+                    <option value="date">Date (newest first)</option>
+                    <option value="citations">Citations</option>
+                    <option value="title">Title</option>
+                </select>
+            </div>
+        </div>
+        <div class="publications-list" id="publications-container">
+            <!-- Publications will be loaded dynamically -->
+        </div>
+    </div>
+</section>
+
+<section id="achievements" class="section">
+    <div class="container">
+        <h2 class="section-title" data-lang-key="section-achievements">{{SEC_ACHIEVEMENTS}}</h2>
+        <div class="achievements-list" id="achievements-container">
+            <!-- Achievements will be loaded from config.json -->
+        </div>
+    </div>
+</section>
+
+<section id="education" class="section">
+    <div class="container">
+        <h2 class="section-title" data-lang-key="section-education">{{SEC_EDUCATION}}</h2>
+        <div class="education-list" id="education-container">
+            <!-- Education will be loaded from config.json -->
+        </div>
+    </div>
+</section>
+
+  {{FOOTER_HTML}}
+
+    <script>
+        function initMobileMenu() {
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            const overlay = document.getElementById('mobile-menu');
+            const closeBtn = overlay?.querySelector('.mobile-menu-close');
+            const links = overlay?.querySelectorAll('.mobile-menu-link');
+
+            const open = () => {
+            overlay.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            toggle?.setAttribute('aria-expanded', 'true');
+            };
+            const close = () => {
+            overlay.style.display = 'none';
+            document.body.style.overflow = '';
+            toggle?.setAttribute('aria-expanded', 'false');
+            };
+
+            toggle?.addEventListener('click', open);
+            closeBtn?.addEventListener('click', close);
+            overlay?.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+            links?.forEach(a => a.addEventListener('click', close));
+        }
+        
+        // JavaScript for homepage functionality
+        document.addEventListener('DOMContentLoaded', async function () {
+            console.log('🚀 Page loaded, initializing...');
+
+            let publicationsData = [];
+            let configData = {};
+            let currentLanguage = 'en';
+            
+            // Generate language selectors dynamically based on config
+            function generateLanguageSelectors(config) {
+                const supportedLanguages = config.settings?.supportedLanguages || [config.settings?.language || 'en'];
+                const primaryLanguage = config.settings?.language || 'en';
+                
+                const languageLabels = {
+                    en: { short: 'EN', full: 'English' },
+                    ko: { short: '한국어', full: '한국어' },
+                    fr: { short: 'FR', full: 'Français' },
+                    ja: { short: '日本語', full: '日本語' },
+                    es: { short: 'ES', full: 'Español' },
+                    de: { short: 'DE', full: 'Deutsch' },
+                    zh: { short: '中文', full: '中文' }
+                };
+                
+                // Only show language selector if multiple languages are supported
+                const desktopSelector = document.getElementById('desktop-language-selector');
+                const mobileSelector = document.getElementById('mobile-language-selector');
+                
+                if (supportedLanguages.length > 1) {
+                    // Generate desktop buttons
+                    if (desktopSelector) {
+                        const desktopButtons = supportedLanguages.map(lang => {
+                            const activeClass = lang === primaryLanguage ? 'active' : '';
+                            const label = languageLabels[lang]?.short || lang.toUpperCase();
+                            return `<button data-lang="${lang}" class="${activeClass}">${label}</button>`;
+                        });
+                        desktopSelector.innerHTML = desktopButtons.join('');
+                    }
+                    
+                    // Generate mobile buttons  
+                    if (mobileSelector) {
+                        const mobileButtons = supportedLanguages.map(lang => {
+                            const activeClass = lang === primaryLanguage ? 'active' : '';
+                            const label = languageLabels[lang]?.full || lang.charAt(0).toUpperCase() + lang.slice(1);
+                            return `<button data-lang="${lang}" class="mobile-lang-btn ${activeClass}">${label}</button>`;
+                        });
+                        mobileSelector.innerHTML = mobileButtons.join('');
+                    }
+                } else {
+                    // Hide language selectors if only one language
+                    if (desktopSelector) desktopSelector.style.display = 'none';
+                    if (mobileSelector && mobileSelector.parentElement) {
+                        mobileSelector.parentElement.style.display = 'none';
+                    }
+                }
+            }
+
+            // Helper function for localized text with fallback support
+            function getLocalizedText(data, lang, defaultLang = 'en') {
+                if (!data) return '';
+                
+                // If data is not an object, return it directly (backward compatibility)
+                if (typeof data !== 'object' || Array.isArray(data)) {
+                    return data;
+                }
+                
+                // Try requested language first
+                if (data[lang]) {
+                    return data[lang];
+                }
+                
+                // Fall back to default language
+                if (data[defaultLang]) {
+                    return data[defaultLang];
+                }
+                
+                // Fall back to first available language
+                const firstKey = Object.keys(data)[0];
+                return firstKey ? data[firstKey] : '';
+            }
+
+            // Simple section title translations object
+            // Build dynamic section titles from config
+            const sectionTitles = {};
+            if (configData.sectionTitles) {
+                // Convert config sectionTitles format to the format expected by the UI
+                const supportedLanguages = configData.settings?.supportedLanguages || ['en'];
+                supportedLanguages.forEach(lang => {
+                    sectionTitles[lang] = {};
+                    for (const [key, translations] of Object.entries(configData.sectionTitles)) {
+                        const translation = typeof translations === 'object' ? 
+                            (translations[lang] || translations.en || translations) : 
+                            translations;
+                        sectionTitles[lang][key] = translation;
+                        // Also add nav- versions for navigation
+                        sectionTitles[lang][key.replace('section-', 'nav-')] = translation;
+                    }
+                    // Add other UI elements
+                    sectionTitles[lang]['sort-by'] = lang === 'ko' ? '정렬:' : 
+                                                   lang === 'fr' ? 'Trier par:' : 
+                                                   lang === 'ja' ? 'ソート:' :
+                                                   lang === 'es' ? 'Ordenar por:' :
+                                                   lang === 'de' ? 'Sortieren nach:' :
+                                                   lang === 'zh' ? '排序:' : 'Sort by:';
+                });
+            } else {
+                // Fallback to hardcoded translations if sectionTitles not found in config
+                sectionTitles.en = {
+                    "section-experience": "Experience", "section-ongoing-projects": "Ongoing Projects", 
+                    "section-publications": "Publications", "section-achievements": "Achievements",
+                    "section-education": "Education", "sort-by": "Sort by:",
+                    "nav-experience": "Experience", "nav-ongoing-projects": "Projects", 
+                    "nav-publications": "Publications", "nav-achievements": "Achievements", 
+                    "nav-education": "Education"
+                };
+            }
+
+            try {
+                // Load config and publications
+                const configResponse = await fetch('config.json');
+                configData = await configResponse.json();
+
+                const response = await fetch('data/publications.json');
+                publicationsData = await response.json();
+
+                // Generate dynamic language selectors
+                generateLanguageSelectors(configData);
+                
+                // Load content dynamically
+                loadStaticContent(configData);
+                
+                // Sort publications initially and render
+                let sortedPublications = [...publicationsData];
+                sortedPublications.sort((a, b) => new Date(b.date) - new Date(a.date));
+                renderPublications(sortedPublications, currentLanguage);
+                
+                
+                // Set current language to primary language from config
+                currentLanguage = configData.settings?.language || 'en';
+                
+                // Initialize UI with default language
+                updateUILanguage(currentLanguage);
+                
+                // Language switching functionality
+                const languageButtons = document.querySelectorAll('[data-lang]');
+                languageButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const selectedLang = this.getAttribute('data-lang');
+                        currentLanguage = selectedLang;
+                        
+                        // Update active button state
+                        languageButtons.forEach(btn => btn.classList.remove('active'));
+                        document.querySelectorAll(`[data-lang="${selectedLang}"]`).forEach(btn => btn.classList.add('active'));
+                        
+                        // Re-render publications with new language
+                        const sortSelect = document.getElementById('sort-select');
+                        let currentPublications = [...publicationsData];
+                        if (sortSelect) {
+                            const sortBy = sortSelect.value;
+                            switch (sortBy) {
+                                case 'date':
+                                    currentPublications.sort((a, b) => new Date(b.date) - new Date(a.date));
+                                    break;
+                                case 'citations':
+                                    currentPublications.sort((a, b) => b.citations - a.citations);
+                                    break;
+                                case 'title':
+                                    currentPublications.sort((a, b) => {
+                                        const titleA = getLocalizedText(a.title, selectedLang, configData.settings?.language || 'en');
+                                        const titleB = getLocalizedText(b.title, selectedLang, configData.settings?.language || 'en');
+                                        return titleA.localeCompare(titleB);
+                                    });
+                                    break;
+                            }
+                        }
+                        renderPublications(currentPublications, selectedLang);
+                        
+                        // Update current language variable and refresh all sections 
+                        currentLanguage = selectedLang;
+                        
+                        // Update UI text based on translations (this now handles all content updates)
+                        updateUILanguage(selectedLang);
+                    });
+                });
+                
+                // Sort functionality
+                const sortSelect = document.getElementById('sort-select');
+                if (sortSelect) {
+                    sortSelect.addEventListener('change', function() {
+                        const sortBy = this.value;
+                        let sortedPublications = [...publicationsData];
+                        
+                        switch (sortBy) {
+                            case 'date':
+                                sortedPublications.sort((a, b) => new Date(b.date) - new Date(a.date));
+                                break;
+                            case 'citations':
+                                sortedPublications.sort((a, b) => b.citations - a.citations);
+                                break;
+                            case 'title':
+                                sortedPublications.sort((a, b) => {
+                                    const titleA = getLocalizedText(a.title, currentLanguage, configData.settings?.language || 'en');
+                                    const titleB = getLocalizedText(b.title, currentLanguage, configData.settings?.language || 'en');
+                                    return titleA.localeCompare(titleB);
+                                });
+                                break;
+                        }
+                        
+                        renderPublications(sortedPublications, currentLanguage);
+                    });
+                }
+
+            } catch (error) {
+                console.error('❌ Error loading data:', error);
+            }
+
+            function loadStaticContent(config) {
+                // Load experiences
+                const experiencesContainer = document.getElementById('experiences-container');
+                if (experiencesContainer) {
+                    if (config.experiences && config.experiences.length > 0) {
+                        experiencesContainer.innerHTML = config.experiences.map((exp, index) => `
+                            <li class="experience-item" data-index="${index}">
+                                <div class="experience-title">
+                                    <div class="experience-main">
+                                        <div class="experience-job">${getLocalizedText(exp.title, currentLanguage, config.settings?.language || 'en')}</div>
+                                        <div class="experience-secondary">${getLocalizedText(exp.location, currentLanguage, config.settings?.language || 'en') || getLocalizedText(exp.period, currentLanguage, config.settings?.language || 'en')}</div>
+                                    </div>
+                                    <span class="experience-period">${getLocalizedText(exp.period, currentLanguage, config.settings?.language || 'en')}</span>
+                                </div>
+                                <div class="experience-description" style="display: none;">
+                                    <ul class="experience-bullets">
+                                        ${(getLocalizedText(exp.description, currentLanguage, config.settings?.language || 'en') || []).map(item => `<li>${item}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </li>
+                        `).join('');
+                        
+                        // Add click functionality
+                        experiencesContainer.addEventListener('click', function (e) {
+                            const item = e.target.closest('.experience-item');
+                            if (item) {
+                                const desc = item.querySelector('.experience-description');
+                                const isVisible = desc.style.display !== 'none';
+                                
+                                // Hide all others
+                                experiencesContainer.querySelectorAll('.experience-description').forEach(d => d.style.display = 'none');
+                                experiencesContainer.querySelectorAll('.experience-item').forEach(i => i.classList.remove('active'));
+                                
+                                if (!isVisible) {
+                                    desc.style.display = 'block';
+                                    item.classList.add('active');
+                                }
+                            }
+                        });
+                    } else {
+                        experiencesContainer.innerHTML = '<li class="experience-item"><div class="experience-title"><div class="experience-main"><div class="experience-job">Add your experiences to config.json</div></div></div></li>';
+                    }
+                }
+
+                // Load projects
+                const projectContainer = document.getElementById('ongoing-project-container');
+                if (projectContainer && config.ongoingProject && config.ongoingProject.length > 0) {
+                    const projects = config.ongoingProject;
+                    projectContainer.innerHTML = projects.map(project => `
+                        <div class="ongoing-project-single" onclick="toggleProject(this)">
+                            <div class="project-header">
+                                <div class="project-name">${getLocalizedText(project.name, currentLanguage, config.settings?.language || 'en')}</div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${project.progress}%"></div>
+                                </div>
+                            </div>
+                            ${project.description ? `<div class="project-description">${getLocalizedText(project.description, currentLanguage, config.settings?.language || 'en')}</div>` : ''}
+                        </div>
+                    `).join('');
+                }
+
+                // Load achievements
+                const achievementsContainer = document.getElementById('achievements-container');
+                if (achievementsContainer) {
+                    if (config.achievements && config.achievements.length > 0) {
+                        achievementsContainer.innerHTML = config.achievements.map(achievement => `
+                            <div class="achievement-item">
+                                <div class="achievement-name">${getLocalizedText(achievement.name, currentLanguage, config.settings?.language || 'en')}</div>
+                                <div class="achievement-period">${getLocalizedText(achievement.period, currentLanguage, config.settings?.language || 'en')}</div>
+                                <div class="achievement-where">${getLocalizedText(achievement.where, currentLanguage, config.settings?.language || 'en')}</div>
+                            </div>
+                        `).join('');
+                    } else {
+                        achievementsContainer.innerHTML = '<div class="achievement-item"><div class="achievement-name">Add your achievements to config.json</div></div>';
+                    }
+                }
+
+                // Load education
+                const educationContainer = document.getElementById('education-container');
+                if (educationContainer) {
+                    if (config.education && config.education.length > 0) {
+                        educationContainer.innerHTML = config.education.map(education => `
+                            <div class="education-item">
+                                <div class="education-degree">${getLocalizedText(education.degree, currentLanguage, config.settings?.language || 'en')}</div>
+                                <div class="education-university">${getLocalizedText(education.university, currentLanguage, config.settings?.language || 'en')}</div>
+                                <div class="education-period">${getLocalizedText(education.period, currentLanguage, config.settings?.language || 'en')}</div>
+                                <div class="education-gpa">${education.gpa || ''}</div>
+                            </div>
+                        `).join('');
+                    } else {
+                        educationContainer.innerHTML = '<div class="education-item"><div class="education-degree">Add your education to config.json</div></div>';
+                    }
+                }
+            }
+
+            function renderPublications(publications, language = 'en') {
+                const container = document.getElementById('publications-container');
+                if (container && publications.length > 0) {
+                    // Completely clear the container
+                    while (container.firstChild) {
+                        container.removeChild(container.firstChild);
+                    }
+                    
+                    const pubsHTML = publications.map(pub => `
+                        <div class="publication-item">
+                            <div class="publication-header">
+                                <div class="publication-content">
+                                    <h3 class="publication-title">${getLocalizedText(pub.title, language, configData.settings?.language || 'en')}</h3>
+                                    <div class="publication-meta">
+                                        <span><i class="fas fa-calendar"></i> ${new Date(pub.date).toLocaleDateString()}</span>
+                                        <span><i class="fas fa-book"></i> ${pub.journal}</span>
+                                        <span><i class="fas fa-quote-right"></i> ${pub.citations} citations</span>
+                                    </div>
+                                </div>
+                                <a href="${pub.link}" target="_blank" class="journal-icon" title="View Article">
+                                    <i class="fas fa-scroll"></i>
+                                </a>
+                            </div>
+                            <div class="publication-abstract">
+                                ${pub.summary[language] || pub.summary.en}
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    container.innerHTML = pubsHTML;
+                    
+                    // Use event delegation for click events
+                    container.removeEventListener('click', handlePublicationClick);
+                    container.addEventListener('click', handlePublicationClick);
+                }
+            }
+            
+            function handlePublicationClick(e) {
+                const pubItem = e.target.closest('.publication-item');
+                if (pubItem && !e.target.closest('a') && !e.target.closest('.journal-icon')) {
+                    pubItem.classList.toggle('expanded');
+                }
+            }
+
+            
+            window.toggleProject = function(projectElement) {
+                projectElement.classList.toggle('active');
+            };
+            
+            function updateUILanguage(selectedLang) {
+                // Update Hero section title and bio using config data
+                const titleElement = document.querySelector('.title[data-lang-key="title"]');
+                if (titleElement && configData.personal && configData.personal.title) {
+                    const title = getLocalizedText(configData.personal.title, selectedLang, configData.settings?.language || 'en');
+                    titleElement.textContent = title;
+                }
+                
+                const bioElement = document.querySelector('.bio[data-lang-key="bio"]');
+                if (bioElement && configData.personal && configData.personal.bio) {
+                    const bio = getLocalizedText(configData.personal.bio, selectedLang, configData.settings?.language || 'en');
+                    bioElement.textContent = bio;
+                }
+                
+                // Update all section titles using config data directly
+                const sectionElements = document.querySelectorAll('[data-lang-key^="section-"]');
+                sectionElements.forEach(element => {
+                    const langKey = element.getAttribute('data-lang-key');
+                    if (configData.sectionTitles && configData.sectionTitles[langKey]) {
+                        const translation = getLocalizedText(configData.sectionTitles[langKey], selectedLang, configData.settings?.language || 'en');
+                        element.textContent = translation;
+                    }
+                });
+                
+                // Update navigation links
+                const navElements = document.querySelectorAll('[data-lang-key^="nav-"]');
+                navElements.forEach(element => {
+                    const langKey = element.getAttribute('data-lang-key');
+                    const sectionKey = langKey.replace('nav-', 'section-');
+                    if (configData.sectionTitles && configData.sectionTitles[sectionKey]) {
+                        const translation = getLocalizedText(configData.sectionTitles[sectionKey], selectedLang, configData.settings?.language || 'en');
+                        element.textContent = translation;
+                    }
+                });
+                
+                // Update experience titles, locations, periods, and descriptions based on selected language
+                const experienceItems = document.querySelectorAll('.experience-item');
+                experienceItems.forEach((item, index) => {
+                    if (configData.experiences && configData.experiences[index]) {
+                        const experience = configData.experiences[index];
+                        
+                        // Update title
+                        const titleElement = item.querySelector('.experience-job');
+                        if (titleElement) {
+                            titleElement.textContent = getLocalizedText(experience.title, selectedLang, configData.settings?.language || 'en');
+                        }
+                        
+                        // Update location/secondary info
+                        const secondaryElement = item.querySelector('.experience-secondary');
+                        if (secondaryElement) {
+                            secondaryElement.textContent = getLocalizedText(experience.location, selectedLang, configData.settings?.language || 'en') || getLocalizedText(experience.period, selectedLang, configData.settings?.language || 'en');
+                        }
+                        
+                        // Update period
+                        const periodElement = item.querySelector('.experience-period');
+                        if (periodElement) {
+                            periodElement.textContent = getLocalizedText(experience.period, selectedLang, configData.settings?.language || 'en');
+                        }
+                        
+                        // Update description
+                        const descElement = item.querySelector('.experience-description .experience-bullets');
+                        if (descElement) {
+                            const descriptions = getLocalizedText(experience.description, selectedLang, configData.settings?.language || 'en');
+                            if (Array.isArray(descriptions)) {
+                                descElement.innerHTML = descriptions.map(desc => '<li>' + desc + '</li>').join('');
+                            }
+                        }
+                    }
+                });
+                
+                // Update achievement names, periods, and where fields based on selected language
+                const achievementItems = document.querySelectorAll('.achievement-item');
+                achievementItems.forEach((item, index) => {
+                    if (configData.achievements && configData.achievements[index]) {
+                        const achievement = configData.achievements[index];
+                        
+                        // Update name
+                        const nameElement = item.querySelector('.achievement-name');
+                        if (nameElement) {
+                            nameElement.textContent = getLocalizedText(achievement.name, selectedLang, configData.settings?.language || 'en');
+                        }
+                        
+                        // Update period
+                        const periodElement = item.querySelector('.achievement-period');
+                        if (periodElement) {
+                            periodElement.textContent = getLocalizedText(achievement.period, selectedLang, configData.settings?.language || 'en');
+                        }
+                        
+                        // Update where
+                        const whereElement = item.querySelector('.achievement-where');
+                        if (whereElement) {
+                            whereElement.textContent = getLocalizedText(achievement.where, selectedLang, configData.settings?.language || 'en');
+                        }
+                    }
+                });
+                
+                // Update education degrees, universities, and periods based on selected language
+                const educationItems = document.querySelectorAll('.education-item');
+                educationItems.forEach((item, index) => {
+                    if (configData.education && configData.education[index]) {
+                        const education = configData.education[index];
+                        
+                        // Update degree
+                        const degreeElement = item.querySelector('.education-degree');
+                        if (degreeElement) {
+                            degreeElement.textContent = getLocalizedText(education.degree, selectedLang, configData.settings?.language || 'en');
+                        }
+                        
+                        // Update university
+                        const universityElement = item.querySelector('.education-university');
+                        if (universityElement) {
+                            universityElement.textContent = getLocalizedText(education.university, selectedLang, configData.settings?.language || 'en');
+                        }
+                        
+                        // Update period
+                        const periodElement = item.querySelector('.education-period');
+                        if (periodElement) {
+                            periodElement.textContent = getLocalizedText(education.period, selectedLang, configData.settings?.language || 'en');
+                        }
+                    }
+                });
+                
+                // Update project names and descriptions based on selected language
+                const projectItems = document.querySelectorAll('.ongoing-project-single');
+                projectItems.forEach((item, index) => {
+                    if (configData.ongoingProject && configData.ongoingProject[index]) {
+                        const project = configData.ongoingProject[index];
+                        
+                        // Update project name
+                        const nameElement = item.querySelector('.project-name');
+                        if (nameElement) {
+                            nameElement.textContent = getLocalizedText(project.name, selectedLang, configData.settings?.language || 'en');
+                        }
+                        
+                        // Update project description
+                        const descElement = item.querySelector('.project-description');
+                        if (descElement) {
+                            descElement.textContent = getLocalizedText(project.description, selectedLang, configData.settings?.language || 'en');
+                        }
+                    }
+                });
+            }
+        });
+        
+        // Initialize mobile menu
+        initMobileMenu();
+    </script>
+</body>
+</html>

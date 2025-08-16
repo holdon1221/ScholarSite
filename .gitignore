@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Environment variables (keep API keys private)
+.env
+
+# Development files
+*.log
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
+
+# Temporary files
+tmp/
+temp/
+
+# Note: All other files are kept for GitHub Pages deployment
+# - data/publications.json (publication data with citations)
+# - publications/*.pdf (research papers)
+# - index.html, app.js, style.css (homepage files)
